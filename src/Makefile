@@ -1,6 +1,7 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic -I.
+LDFLAGS = -lcrypto -lssl
 
 # Source files
 SRC_DIR = .
@@ -18,12 +19,12 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $^ -o $@ 
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 	@echo "[INFO] program was built: $@"
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 
 clean:
 	@rm -rf $(BUILD_DIR) $(TARGET)

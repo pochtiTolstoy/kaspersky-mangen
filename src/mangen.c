@@ -1,5 +1,7 @@
 #define _DEFAULT_SOURCE
 #include <dirent.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +16,8 @@ void display_error(const char *);
 void scan_dir(const char *, const char *);
 void list_dir(const char *, const char *, struct dirent **, int);
 void clear_namelist(struct dirent **, int);
+void print_hash(const char *);
+int hashgen(char *, const char *);
 
 int main(int argc, char *argv[]) {
   const char *dirpath = NULL;
@@ -82,26 +86,33 @@ void scan_dir(const char *rootpath, const char *printpath) {
 void list_dir(const char *rootpath, const char *printpath,
               struct dirent **namelist, int file_counter) {
   for (int i = 0; i < file_counter; ++i) {
+    char new_printpath[PATH_MAX];
+    char fullpath[PATH_MAX];
+    int length;
+    if (printpath) {
+      length = snprintf(new_printpath, PATH_MAX, "%s/%s", printpath,
+                        namelist[i]->d_name);
+    } else {
+      length = snprintf(new_printpath, PATH_MAX, "%s", namelist[i]->d_name);
+    }
+    if (length >= PATH_MAX) {
+      display_error("Path length reached its maximum\n");
+      return;
+    }
+    int length2 =
+        snprintf(fullpath, PATH_MAX, "%s/%s", rootpath, new_printpath);
+    if (length2 >= PATH_MAX) {
+      display_error("Path length reached its maximum\n");
+      return;
+    }
     if (namelist[i]->d_type == DT_DIR) {
-      char new_printpath[PATH_MAX];
-      int length;
-      if (printpath) {
-        length = snprintf(new_printpath, PATH_MAX, "%s/%s", printpath,
-                          namelist[i]->d_name);
-      } else {
-        length = snprintf(new_printpath, PATH_MAX, "%s", namelist[i]->d_name);
-      }
-      if (length >= PATH_MAX) {
-        display_error("Path length reached its maximum\n");
-        return;
-      }
       scan_dir(rootpath, new_printpath);
     } else if (namelist[i]->d_type == DT_REG) {
-      (printpath) ? printf("%s/", printpath) : 0;
-      printf("%s : %s\n", namelist[i]->d_name, "0");
+      printf("%s : ", new_printpath);
+      print_hash(fullpath);
     } else {
       char err_msg[PATH_MAX];
-      snprintf(err_msg, PATH_MAX, "Unknown type of : %s\n",
+      snprintf(err_msg, PATH_MAX, "Unknown type of file : %s\n",
                namelist[i]->d_name);
       display_error(err_msg);
     }
@@ -113,4 +124,55 @@ void clear_namelist(struct dirent **namelist, int n) {
     free(namelist[i]);
   }
   free(namelist);
+}
+
+void print_hash(const char *fullpath) {
+  char hash_str[EVP_MAX_MD_SIZE * 2 + 1];
+  if (hashgen(hash_str, fullpath) == 0) {
+    printf("%s", hash_str);
+  }
+  printf("\n");
+}
+
+int hashgen(char *hash_str, const char *filepath) {
+  FILE *file = fopen(filepath, "rb");
+  if (!file) {
+    char err_msg[PATH_MAX];
+    snprintf(err_msg, PATH_MAX, "Can't open file : %s\n", filepath);
+    display_error(err_msg);
+    return -1;
+  }
+
+  EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+  const EVP_MD *md = EVP_sha256();
+  unsigned char hash[EVP_MAX_MD_SIZE];
+  unsigned int hash_len;
+
+  if (!EVP_DigestInit_ex(ctx, md, NULL)) {
+    ERR_print_errors_fp(stderr);
+    fclose(file);
+    EVP_MD_CTX_free(ctx);
+    return -1;
+  }
+
+  unsigned char buffer[4096];
+  size_t bytes_read;
+  while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    if (!EVP_DigestUpdate(ctx, buffer, bytes_read)) {
+      ERR_print_errors_fp(stderr);
+      break;
+    }
+  }
+
+  if (EVP_DigestFinal_ex(ctx, hash, &hash_len)) {
+    for (size_t i = 0; i < hash_len; ++i) {
+      sprintf(hash_str + (i * 2), "%02x", hash[i]);
+    }
+    hash_str[hash_len * 2] = '\0';
+  }
+
+  fclose(file);
+  EVP_MD_CTX_free(ctx);
+
+  return 0;
 }
