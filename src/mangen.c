@@ -1,50 +1,4 @@
-#define _DEFAULT_SOURCE
-#include <dirent.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define MAX_ARGC 2
-#define DEFAULT_PATH "."
-
-typedef enum { RESULT_OK, RESULT_ERR } Result;
-
-int filter(const struct dirent *);
-void display_help();
-void display_version();
-void display_error(const char *);
-void scan_dir(const char *, const char *);
-void list_dir(const char *, const char *, struct dirent **, int);
-void clear_namelist(struct dirent **, int);
-void print_hash(const char *);
-int hashgen(char *, const char *);
-Result construct_path(char *, int, const char *, const char *);
-
-int main(int argc, char *argv[]) {
-  const char *dirpath = NULL;
-  if (argc > MAX_ARGC) {
-    display_error("Wrong number of arguments.\n");
-    display_help();
-    exit(EXIT_FAILURE);
-  }
-
-  if (argc == 2 && strcmp(argv[1], "-h") == 0) {
-    display_help();
-  } else if (argc == 2 && strcmp(argv[1], "-v") == 0) {
-    display_version();
-  } else {
-    dirpath = (argc == 2) ? argv[1] : DEFAULT_PATH;
-    scan_dir(dirpath, NULL);
-  }
-
-  return 0;
-}
-
-int filter(const struct dirent *file) {
-  return (strcmp(file->d_name, ".") && strcmp(file->d_name, ".."));
-}
+#include "mangen.h"
 
 void display_help() {
   printf("[HELP]: ./mangen [DIRECTORY] [OPTIONS]\n"
@@ -78,7 +32,9 @@ void scan_dir(const char *rootpath, const char *subpath) {
 
   int file_counter = scandir(scanpath, &namelist, filter, alphasort);
   if (file_counter == -1) {
-    display_error("Can't open directory.\n");
+    char err_msg[PATH_MAX + 64];
+    snprintf(err_msg, PATH_MAX + 64, "Can't open directory : %s\n", scanpath);
+    display_error(err_msg);
     return;
   }
 
@@ -137,7 +93,7 @@ int hashgen(char *hash_str, const char *filepath) {
   FILE *file = fopen(filepath, "rb");
   if (!file) {
     char err_msg[PATH_MAX];
-    snprintf(err_msg, PATH_MAX, "Can't open file : %s\n", filepath);
+    snprintf(err_msg, PATH_MAX, "Can't open file : %s", filepath);
     display_error(err_msg);
     return RESULT_ERR;
   }
@@ -196,4 +152,8 @@ Result construct_path(char *result, int max_size, const char *base,
   }
 
   return err;
+}
+
+int filter(const struct dirent *file) {
+  return (strcmp(file->d_name, ".") && strcmp(file->d_name, ".."));
 }
