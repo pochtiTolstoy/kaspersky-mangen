@@ -29,7 +29,7 @@ clean:
 rebuild: clean all
 
 # Style targets
-style: 
+style_check: 
 	find $(SRC_DIR) -type f -name "*.[c,h]" -exec clang-format -n -style=Google {} +
 	! find $(SRC_DIR) -type f -name "*.[c,h]" -exec grep -n '[А-Яа-яЁё]' {} +
 
@@ -39,4 +39,4 @@ style_fix:
 comments:
 	find $(SRC_DIR) -type f -name "*.[c,h]" -exec grep -n '//\|\/\*' {} +
 
-.PHONY: all clean rebuild style style_fix comments
+.PHONY: all clean rebuild style_check style_fix comments
