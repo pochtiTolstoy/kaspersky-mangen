@@ -3,8 +3,9 @@
  * @brief Main application entry point
  * @ingroup MangenCore
  */
-#include "mangen.h"
 #include <stdio.h>
+
+#include "mangen.h"
 
 /**
  * @brief Program entry point
@@ -20,11 +21,13 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /* Scan based on DEFAULT_PATH */
   if (argc == 1) {
     scan_dir(DEFAULT_PATH, NULL, NULL);
     return EXIT_SUCCESS;
   }
 
+  /* Scan specified PATH or display INFO flags*/
   if (argc == 2) {
     if (strcmp(argv[1], "-h") == 0) {
       display_help();
@@ -36,7 +39,8 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  int pattern_pos = 0;
+  /* Scan with exclude pattern */
+  int pattern_pos = 0; /* index of pattern inside argv */
   bool default_path = true;
   if (argc == 3 && strcmp(argv[1], "-e") == 0) {
     pattern_pos = 2;
@@ -48,6 +52,7 @@ int main(int argc, char *argv[]) {
     display_help();
     exit(EXIT_FAILURE);
   }
+
   const char *path = (default_path) ? DEFAULT_PATH : argv[1];
   const char *pattern = argv[pattern_pos];
   return process_exclude_scan(path, pattern);

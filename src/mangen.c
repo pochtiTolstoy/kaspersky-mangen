@@ -4,19 +4,21 @@
  * @ingroup MangenCore
  */
 #include "mangen.h"
-#include <limits.h> // For PATH_MAX
+
+#include <limits.h>  // For PATH_MAX
 
 /* Helper macro for error message formatting */
 #define ERROR_BUF_SIZE (PATH_MAX + 64)
 
 void display_help() {
-  printf("[HELP]: ./mangen [DIRECTORY] [OPTIONS]\n"
-         "Calculate SHA256 hashes for files in DIRECTORY (default: current "
-         "directory)\n\n"
-         "Options:\n"
-         "  -e\tExclude all files/directories with the name FILE_NAME\n"
-         "  -h\tDisplay help message\n"
-         "  -v\tDisplay version info\n");
+  printf(
+      "[HELP]: ./mangen [DIRECTORY] [OPTIONS]\n"
+      "Calculate SHA256 hashes for files in DIRECTORY (default: current "
+      "directory)\n\n"
+      "Options:\n"
+      "  -e\tExclude all files/directories with the name FILE_NAME\n"
+      "  -h\tDisplay help message\n"
+      "  -v\tDisplay version info\n");
 }
 
 void display_version() {
@@ -83,7 +85,7 @@ void list_dir(const char *rootpath, const char *subpath,
 
     /* Handle differet file types */
     if (namelist[i]->d_type == DT_DIR) {
-      scan_dir(rootpath, new_subpath, exclude_regex); // Recursive descent
+      scan_dir(rootpath, new_subpath, exclude_regex);  // Recursive descent
     } else if (namelist[i]->d_type == DT_REG) {
       printf("%s : ", new_subpath);
       fflush(stdout);
@@ -205,13 +207,13 @@ int is_exclude_path(const char *src, regex_t *exclude_regex) {
 
 char *convert_pattern(const char *pattern) {
   size_t len = strlen(pattern);
-  size_t buf_size = 2 * len + 10; // enough size for transformation
+  size_t buf_size = 2 * len + 10;  // enough size for transformation
   char *regex_pattern = malloc(buf_size);
   if (!regex_pattern) {
     return NULL;
   }
   char *ptr = regex_pattern;
-  *ptr++ = '^'; // Start of string anchor
+  *ptr++ = '^';  // Start of string anchor
 
   for (size_t i = 0; i < len; ++i) {
     if (pattern[i] == '*') {
@@ -221,7 +223,7 @@ char *convert_pattern(const char *pattern) {
       *ptr++ = pattern[i];
     }
   }
-  *ptr++ = '$'; // End of string anchor
+  *ptr++ = '$';  // End of string anchor
   *ptr = '\0';
 
   return regex_pattern;

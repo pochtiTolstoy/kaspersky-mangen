@@ -38,6 +38,10 @@ docs: all
 	rm -rf doxygen_docs && \
 	doxygen doxygen.txt && \
 	open doxygen_docs/html/index.html
+	@echo "[INFO] Docs files created"
+
+tests: $(TARGET) run_tests.sh
+	./run_tests.sh
 
 # Style targets
 style_check: 
@@ -50,4 +54,38 @@ style_fix:
 comments:
 	find $(SRC_DIR) -type f -name "*.[c,h]" -exec grep -n '//\|\/\*' {} +
 
-.PHONY: all clean rebuild style_check style_fix comments
+.PHONY: all clean rebuild style_check style_fix comments tests help
+
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Build targets:"
+	@echo "  all           Build the executable (default target)"
+	@echo "  rebuild       Clean and rebuild from scratch"
+	@echo ""
+	@echo "Clean targets:"
+	@echo "  clean         Remove all build artifacts"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  docs          Generate Doxygen documentation and open in browser"
+	@echo ""
+	@echo "Testing:"
+	@echo "  tests         Run all unit tests"
+	@echo ""
+	@echo "Code style:"
+	@echo "  style_check   Check code style compliance (clang-format)"
+	@echo "  style_fix     Automatically fix code style issues"
+	@echo ""
+	@echo "Code analysis:"
+	@echo "  comments      Search for comments in source files"
+	@echo ""
+	@echo "Miscellaneous:"
+	@echo "  help          Show this help message"
+	@echo ""
+	@echo "Flags:"
+	@echo "  CFLAGS        $(CFLAGS)"
+	@echo "  LDFLAGS       $(LDFLAGS)"
+	@echo "  GIT_HASH      $(GIT_HASH)"
+	@echo ""
+	@echo "Example:"
+	@echo "  make rebuild tests   # Full rebuild and run tests"

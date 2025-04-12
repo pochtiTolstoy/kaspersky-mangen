@@ -154,8 +154,8 @@ char *convert_pattern(const char *pattern);
  */
 int process_exclude_scan(const char *path, const char *pattern);
 
-#endif    /* MANGEN_H */
-/** @} */ // End of MangenCore group
+#endif     /* MANGEN_H */
+/** @} */  // End of MangenCore group
 
 /**
  * @mainpage File Hash Generator
