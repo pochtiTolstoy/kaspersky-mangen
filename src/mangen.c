@@ -9,6 +9,8 @@
 #define MAX_ARGC 2
 #define DEFAULT_PATH "."
 
+typedef enum { RESULT_OK, RESULT_ERR } Result;
+
 int filter(const struct dirent *);
 void display_help();
 void display_version();
@@ -18,6 +20,7 @@ void list_dir(const char *, const char *, struct dirent **, int);
 void clear_namelist(struct dirent **, int);
 void print_hash(const char *);
 int hashgen(char *, const char *);
+Result construct_path(char *, int, const char *, const char *);
 
 int main(int argc, char *argv[]) {
   const char *dirpath = NULL;
@@ -61,54 +64,46 @@ void display_error(const char *err) {
   printf("[ERROR]: %s", err);
 }
 
-void scan_dir(const char *rootpath, const char *printpath) {
+void scan_dir(const char *rootpath, const char *subpath) {
   struct dirent **namelist;
   char scanpath[PATH_MAX];
-  int length;
-  if (printpath) {
-    length = snprintf(scanpath, PATH_MAX, "%s/%s", rootpath, printpath);
-  } else {
-    length = snprintf(scanpath, PATH_MAX, "%s", rootpath);
-  }
-  if (length >= PATH_MAX) {
+  if (construct_path(scanpath, PATH_MAX, rootpath, subpath) == RESULT_ERR) {
     display_error("Path length reached its maximum\n");
     return;
   }
+
   int file_counter = scandir(scanpath, &namelist, filter, alphasort);
   if (file_counter == -1) {
     display_error("Can't open directory.\n");
     return;
   }
-  list_dir(rootpath, printpath, namelist, file_counter);
+
+  list_dir(rootpath, subpath, namelist, file_counter);
   clear_namelist(namelist, file_counter);
 }
 
-void list_dir(const char *rootpath, const char *printpath,
+void list_dir(const char *rootpath, const char *subpath,
               struct dirent **namelist, int file_counter) {
   for (int i = 0; i < file_counter; ++i) {
-    char new_printpath[PATH_MAX];
+    char new_subpath[PATH_MAX];
     char fullpath[PATH_MAX];
-    int length;
-    if (printpath) {
-      length = snprintf(new_printpath, PATH_MAX, "%s/%s", printpath,
-                        namelist[i]->d_name);
-    } else {
-      length = snprintf(new_printpath, PATH_MAX, "%s", namelist[i]->d_name);
-    }
-    if (length >= PATH_MAX) {
+
+    if (construct_path(new_subpath, PATH_MAX, subpath, namelist[i]->d_name) ==
+        RESULT_ERR) {
       display_error("Path length reached its maximum\n");
       return;
     }
-    int length2 =
-        snprintf(fullpath, PATH_MAX, "%s/%s", rootpath, new_printpath);
-    if (length2 >= PATH_MAX) {
+
+    if (construct_path(fullpath, PATH_MAX, rootpath, new_subpath) ==
+        RESULT_ERR) {
       display_error("Path length reached its maximum\n");
       return;
     }
+
     if (namelist[i]->d_type == DT_DIR) {
-      scan_dir(rootpath, new_printpath);
+      scan_dir(rootpath, new_subpath);
     } else if (namelist[i]->d_type == DT_REG) {
-      printf("%s : ", new_printpath);
+      printf("%s : ", new_subpath);
       print_hash(fullpath);
     } else {
       char err_msg[PATH_MAX];
@@ -140,7 +135,7 @@ int hashgen(char *hash_str, const char *filepath) {
     char err_msg[PATH_MAX];
     snprintf(err_msg, PATH_MAX, "Can't open file : %s\n", filepath);
     display_error(err_msg);
-    return -1;
+    return RESULT_ERR;
   }
 
   EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -152,7 +147,7 @@ int hashgen(char *hash_str, const char *filepath) {
     ERR_print_errors_fp(stderr);
     fclose(file);
     EVP_MD_CTX_free(ctx);
-    return -1;
+    return RESULT_ERR;
   }
 
   unsigned char buffer[4096];
@@ -174,5 +169,27 @@ int hashgen(char *hash_str, const char *filepath) {
   fclose(file);
   EVP_MD_CTX_free(ctx);
 
-  return 0;
+  return RESULT_OK;
+}
+
+Result construct_path(char *result, int max_size, const char *base,
+                      const char *sub) {
+  Result err = RESULT_OK;
+  const int is_base = (base != NULL && base[0] != '\0');
+  const int is_sub = (sub != NULL && sub[0] != '\0');
+  int written = 0;
+  if (is_base && is_sub) {
+    written = snprintf(result, max_size, "%s/%s", base, sub);
+  } else if (is_base) {
+    written = snprintf(result, max_size, "%s", base);
+  } else if (is_sub) {
+    written = snprintf(result, max_size, "%s", sub);
+  }
+
+  if ((!is_base && !is_sub) || written < 0 || written >= max_size) {
+    result[0] = '\0';
+    err = RESULT_ERR;
+  }
+
+  return err;
 }
