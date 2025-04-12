@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <regex.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,10 +63,10 @@ void display_error(const char *message);
  * @brief Recursive directory scanner
  * @param rootpath Base directory path
  * @param subpath Current subdirectory path
- * @param exclude_path Path to exclude
+ * @param exclude_regex Regex regular expression to exclude path
  */
 void scan_dir(const char *rootpath, const char *subpath,
-              const char *exclude_path);
+              regex_t *exclude_regex);
 
 /**
  * @brief Process directory contents
@@ -73,11 +74,11 @@ void scan_dir(const char *rootpath, const char *subpath,
  * @param subpath Current subdirectory path
  * @param namelist Array of directory entries
  * @param file_counter Number of entries in namelist
- * @param exclude_path Path to exclude
+ * @param exclude_regex Regular expression to exclude path
  */
 void list_dir(const char *rootpath, const char *subpath,
               struct dirent **namelist, int file_counter,
-              const char *exclude_path);
+              regex_t *exclude_regex);
 
 /**
  * @brief Clean up scandir namelist
@@ -114,10 +115,10 @@ Result construct_path(char *result, int max_size, const char *base,
 /**
  * @brief Check if path should be excluded
  * @param src Source path to check
- * @param exclude Pattern to exclude
+ * @param exclude_regex Regex regualr expression to exclude path
  * @return 1 on success, 0 on failure
  */
-int is_exclude_path(const char *src, const char *exclude);
+int is_exclude_path(const char *src, regex_t *exclude_regex);
 
 /**
  * @brief Converts a pattern into a regular expression.

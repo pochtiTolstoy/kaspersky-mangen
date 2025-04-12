@@ -30,7 +30,7 @@ void display_version() {
 void display_error(const char *err) { printf("[ERROR]: %s", err); }
 
 void scan_dir(const char *rootpath, const char *subpath,
-              const char *exclude_path) {
+              regex_t *exclude_regex) {
   struct dirent **namelist;
   char scanpath[PATH_MAX];
 
@@ -50,13 +50,13 @@ void scan_dir(const char *rootpath, const char *subpath,
   }
 
   /* Process directory contents and clean up */
-  list_dir(rootpath, subpath, namelist, file_counter, exclude_path);
+  list_dir(rootpath, subpath, namelist, file_counter, exclude_regex);
   clear_namelist(namelist, file_counter);
 }
 
 void list_dir(const char *rootpath, const char *subpath,
               struct dirent **namelist, int file_counter,
-              const char *exclude_path) {
+              regex_t *exclude_regex) {
   /* Iterate through directory entries with path construction */
   for (int i = 0; i < file_counter; ++i) {
     char new_subpath[PATH_MAX];
@@ -77,14 +77,14 @@ void list_dir(const char *rootpath, const char *subpath,
     }
 
     /* Filter current entry path */
-    if (is_exclude_path(new_subpath, exclude_path)) {
+    if (is_exclude_path(new_subpath, exclude_regex)) {
       printf("[LOG]: exclude path : %s\n", new_subpath);
       continue;
     }
 
     /* Handle differet file types */
     if (namelist[i]->d_type == DT_DIR) {
-      scan_dir(rootpath, new_subpath, exclude_path); // Recursive descent
+      scan_dir(rootpath, new_subpath, exclude_regex); // Recursive descent
     } else if (namelist[i]->d_type == DT_REG) {
       printf("%s : ", new_subpath);
       fflush(stdout);
@@ -191,8 +191,8 @@ int filter(const struct dirent *file) {
   return (strcmp(file->d_name, ".") && strcmp(file->d_name, ".."));
 }
 
-int is_exclude_path(const char *src, const char *exclude) {
-  if (!src || !exclude) {
+int is_exclude_path(const char *src, regex_t *exclude_regex) {
+  if (!src || !exclude_regex) {
     return 0;
   }
 
@@ -200,24 +200,8 @@ int is_exclude_path(const char *src, const char *exclude) {
   const char *base = strrchr(src, '/');
   base = (base) ? (base + 1) : src;
 
-  /* Convert wildcard pattern into a valid regular expression string */
-  char *regex_str = convert_pattern(exclude);
-  if (!regex_str) {
-    return 0;
-  }
-
-  regex_t regex;
-  int ret = regcomp(&regex, regex_str, REG_EXTENDED);
-  free(regex_str);
-  if (ret != 0) {
-    return 0; /* Compilation failure */
-  }
-
   /* Execute the regular expression on the base name */
-  ret = regexec(&regex, base, 0, NULL, 0);
-  regfree(&regex);
-
-  return (ret == 0);
+  return (regexec(exclude_regex, base, 0, NULL, 0) == 0);
 }
 
 char *convert_pattern(const char *pattern) {
