@@ -78,7 +78,6 @@ void list_dir(const char *rootpath, const char *subpath,
 
     /* Filter current entry path */
     if (is_exclude_path(new_subpath, exclude_regex)) {
-      printf("[LOG]: exclude path : %s\n", new_subpath);
       continue;
     }
 
@@ -226,4 +225,19 @@ char *convert_pattern(const char *pattern) {
   *ptr = '\0';
 
   return regex_pattern;
+}
+
+int process_exclude_scan(const char *path, const char *pattern) {
+  /* Convert wildcard pattern into a valid regular expression string */
+  regex_t exclude_regex;
+  char *exclude_pattern = convert_pattern(pattern);
+  int ret = regcomp(&exclude_regex, exclude_pattern, REG_EXTENDED);
+  if (ret != 0) {
+    display_error("Regex compilation failure\n");
+  } else {
+    scan_dir(path, NULL, &exclude_regex); /* process directory */
+    regfree(&exclude_regex);
+  }
+  free(exclude_pattern);
+  return ret;
 }

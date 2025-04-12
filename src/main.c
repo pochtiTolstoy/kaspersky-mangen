@@ -36,45 +36,19 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  if (argc == 3) {
-    if (strcmp(argv[1], "-e") == 0) {
-      /* Convert wildcard pattern into a valid regular expression string */
-      regex_t exclude_regex;
-      char *exclude_path = convert_pattern(argv[2]);
-      int ret = regcomp(&exclude_regex, exclude_path, REG_EXTENDED);
-      if (ret != 0) {
-        display_error("Regex compilation failure\n");
-      } else {
-        scan_dir(DEFAULT_PATH, NULL, &exclude_regex);
-        regfree(&exclude_regex);
-      }
-      free(exclude_path);
-    } else {
-      display_error("Wrong argument sequence.\n");
-      display_help();
-      return EXIT_FAILURE;
-    }
+  int pattern_pos = 0;
+  bool default_path = true;
+  if (argc == 3 && strcmp(argv[1], "-e") == 0) {
+    pattern_pos = 2;
+  } else if (argc == 4 && strcmp(argv[2], "-e") == 0) {
+    pattern_pos = 3;
+    default_path = false;
+  } else {
+    display_error("Wrong argument sequence.\n");
+    display_help();
+    exit(EXIT_FAILURE);
   }
-
-  if (argc == 4) {
-    if (strcmp(argv[2], "-e") == 0) {
-      /* Convert wildcard pattern into a valid regular expression string */
-      regex_t exclude_regex;
-      char *exclude_path = convert_pattern(argv[3]);
-      int ret = regcomp(&exclude_regex, exclude_path, REG_EXTENDED);
-      if (ret != 0) {
-        display_error("Regex compilation failure\n");
-      } else {
-        scan_dir(argv[1], NULL, &exclude_regex);
-        regfree(&exclude_regex);
-      }
-      free(exclude_path);
-    } else {
-      display_error("Wrong argument sequence.\n");
-      display_help();
-      return EXIT_FAILURE;
-    }
-  }
-
-  return EXIT_SUCCESS;
+  const char *path = (default_path) ? DEFAULT_PATH : argv[1];
+  const char *pattern = argv[pattern_pos];
+  return process_exclude_scan(path, pattern);
 }

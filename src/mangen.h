@@ -133,6 +133,27 @@ int is_exclude_path(const char *src, regex_t *exclude_regex);
  */
 char *convert_pattern(const char *pattern);
 
+/**
+ * @brief Processes directory scanning with exclusion based on a wildcard
+ * pattern.
+ *
+ * This function converts a wildcard exclusion pattern into a regular
+ * expression, compiles it, and performs a directory scan while excluding files
+ * matching the pattern.
+ *
+ * @param path The directory path to scan. Must be a valid accessible path.
+ * @param pattern Wildcard pattern for exclusion (e.g., "*.log").
+ *
+ * @return int Returns the status code from regcomp():
+ *             - 0 on successful regex compilation
+ *             - Non-zero error code on regex compilation failure
+ *
+ * @note Memory for the converted regex pattern is automatically
+ * allocated/freed.
+ * @warning The caller is responsible for validating the existence of `path`.
+ */
+int process_exclude_scan(const char *path, const char *pattern);
+
 #endif    /* MANGEN_H */
 /** @} */ // End of MangenCore group
 
@@ -152,6 +173,7 @@ char *convert_pattern(const char *pattern);
  * Options:
  *   -h  Show help message
  *   -v  Display version information
+ *   -e  Exclude path
  * @endcode
  *
  * @section design Design
