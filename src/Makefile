@@ -4,9 +4,12 @@ CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic -I.
 
 # Source files
 SRC_DIR = .
+TEST_DIR = $(SRC_DIR)/tests
 BUILD_DIR = ../build
+GIT_HASH = $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+CFLAGS += -DGIT_COMMIT_HASH=\"$(GIT_HASH)\"
 
-SRCS = $(shell find $(SRC_DIR) -type f -name '*.c')
+SRCS = $(shell find $(SRC_DIR) -not -path '$(TEST_DIR)/*' -type f -name '*.c' )
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 TARGET = mangen
 

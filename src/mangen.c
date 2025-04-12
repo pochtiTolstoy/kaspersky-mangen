@@ -45,8 +45,11 @@ void display_help() {
 }
 
 void display_version() {
-  //
-  printf("[VERSION]:\n");
+#ifdef GIT_COMMIT_HASH
+  printf("[VERSION]: git commit hash : %s\n", GIT_COMMIT_HASH);
+#else
+  printf("[VERSION]: version : %s\n", "v1.0");
+#endif
 }
 
 void display_error(const char *err) {
@@ -98,7 +101,8 @@ void list_dir(const char *rootpath, const char *printpath,
       printf("%s : %s\n", namelist[i]->d_name, "0");
     } else {
       char err_msg[PATH_MAX];
-      snprintf(err_msg, PATH_MAX, "Unkown type of : %s\n", namelist[i]->d_name);
+      snprintf(err_msg, PATH_MAX, "Unknown type of : %s\n",
+               namelist[i]->d_name);
       display_error(err_msg);
     }
   }
