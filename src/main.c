@@ -14,20 +14,25 @@
  * @return EXIT_FAILURE on error
  */
 int main(int argc, char *argv[]) {
-  const char *dirpath = NULL;
+  // const char *dirpath = NULL;
   if (argc > MAX_ARGC) {
     display_error("Wrong number of arguments.\n");
     display_help();
     exit(EXIT_FAILURE);
   }
 
-  if (argc == 2 && strcmp(argv[1], "-h") == 0) {
-    display_help();
-  } else if (argc == 2 && strcmp(argv[1], "-v") == 0) {
-    display_version();
-  } else {
-    dirpath = (argc == 2) ? argv[1] : DEFAULT_PATH;
-    scan_dir(dirpath, NULL);
+  if (argc == 1) {
+    scan_dir(DEFAULT_PATH, NULL);
+  }
+
+  if (argc == 2) {
+    if (strcmp(argv[1], "-h") == 0) {
+      display_help();
+    } else if (strcmp(argv[1], "-v") == 0) {
+      display_version();
+    } else {
+      scan_dir(argv[1], NULL);
+    }
   }
 
   return EXIT_SUCCESS;

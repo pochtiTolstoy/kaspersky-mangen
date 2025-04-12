@@ -19,7 +19,7 @@
  * @def MAX_ARGC
  * @brief Maximum allowed number of command line arguments
  */
-#define MAX_ARGC 2
+#define MAX_ARGC 3
 
 /**
  * @def DEFAULT_PATH

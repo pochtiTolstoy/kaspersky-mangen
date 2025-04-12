@@ -14,6 +14,7 @@ void display_help() {
          "Calculate SHA256 hashes for files in DIRECTORY (default: current "
          "directory)\n\n"
          "Options:\n"
+         "  -e\tExclude all files/directories with the name FILE_NAME\n"
          "  -h\tDisplay help message\n"
          "  -v\tDisplay version info\n");
 }
@@ -26,7 +27,7 @@ void display_version() {
 #endif
 }
 
-void display_error(const char *err) { fprintf(stderr, "[ERROR]: %s", err); }
+void display_error(const char *err) { printf("[ERROR]: %s", err); }
 
 void scan_dir(const char *rootpath, const char *subpath) {
   struct dirent **namelist;
@@ -78,6 +79,7 @@ void list_dir(const char *rootpath, const char *subpath,
       scan_dir(rootpath, new_subpath); // Recursive descent
     } else if (namelist[i]->d_type == DT_REG) {
       printf("%s : ", new_subpath);
+      fflush(stdout);
       print_hash(fullpath);
     } else {
       char err_msg[PATH_MAX];
@@ -98,10 +100,9 @@ void clear_namelist(struct dirent **namelist, int n) {
 
 void print_hash(const char *fullpath) {
   char hash_str[EVP_MAX_MD_SIZE * 2 + 1];
-  if (hashgen(hash_str, fullpath) == 0) {
-    printf("%s", hash_str);
+  if (hashgen(hash_str, fullpath) == RESULT_OK) {
+    printf("%s\n", hash_str);
   }
-  printf("\n");
 }
 
 Result hashgen(char *hash_str, const char *filepath) {
@@ -109,7 +110,7 @@ Result hashgen(char *hash_str, const char *filepath) {
   FILE *file = fopen(filepath, "rb");
   if (!file) {
     char err_msg[PATH_MAX];
-    snprintf(err_msg, PATH_MAX, "Can't open file : %s", filepath);
+    snprintf(err_msg, PATH_MAX, "Can't open file : %s\n", filepath);
     display_error(err_msg);
     return RESULT_ERR;
   }
