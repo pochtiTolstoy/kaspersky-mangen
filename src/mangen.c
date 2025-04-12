@@ -47,8 +47,12 @@ int filter(const struct dirent *file) {
 }
 
 void display_help() {
-  //
-  printf("[HELP]:\n");
+  printf("[HELP]: ./mangen [DIRECTORY] [OPTIONS]\n"
+         "Calculate SHA256 hashes for files in DIRECTORY (default: current "
+         "directory)\n\n"
+         "Options:\n"
+         "  -h\tDisplay help message\n"
+         "  -v\tDisplay version info\n");
 }
 
 void display_version() {
