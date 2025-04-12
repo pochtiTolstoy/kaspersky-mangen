@@ -10,7 +10,7 @@ BUILD_DIR = ../build
 GIT_HASH = $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 CFLAGS += -DGIT_COMMIT_HASH=\"$(GIT_HASH)\"
 
-SRCS = $(shell find $(SRC_DIR) -not -path '$(TEST_DIR)/*' -type f -name '*.c' )
+SRCS = $(shell find $(SRC_DIR) -not -path '$(TEST_DIR)/*' -type f -name '*.c' 2>/dev/null)
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 TARGET = mangen
 
@@ -31,6 +31,13 @@ clean:
 	@echo "[INFO] Build files cleaned"
 
 rebuild: clean all
+
+# Docs
+docs: all
+	cd ../ && \
+	rm -rf doxygen_docs && \
+	doxygen doxygen.txt && \
+	open doxygen_docs/html/index.html
 
 # Style targets
 style_check: 

@@ -1,6 +1,7 @@
 build
 mangen
 tests
+doxygen_docs
 
 # Prerequisites
 *.d
