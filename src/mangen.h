@@ -11,6 +11,7 @@
 #include <dirent.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +20,7 @@
  * @def MAX_ARGC
  * @brief Maximum allowed number of command line arguments
  */
-#define MAX_ARGC 3
+#define MAX_ARGC 4
 
 /**
  * @def DEFAULT_PATH
@@ -61,8 +62,10 @@ void display_error(const char *message);
  * @brief Recursive directory scanner
  * @param rootpath Base directory path
  * @param subpath Current subdirectory path
+ * @param exclude_path Path to exclude
  */
-void scan_dir(const char *rootpath, const char *subpath);
+void scan_dir(const char *rootpath, const char *subpath,
+              const char *exclude_path);
 
 /**
  * @brief Process directory contents
@@ -70,9 +73,11 @@ void scan_dir(const char *rootpath, const char *subpath);
  * @param subpath Current subdirectory path
  * @param namelist Array of directory entries
  * @param file_counter Number of entries in namelist
+ * @param exclude_path Path to exclude
  */
 void list_dir(const char *rootpath, const char *subpath,
-              struct dirent **namelist, int file_counter);
+              struct dirent **namelist, int file_counter,
+              const char *exclude_path);
 
 /**
  * @brief Clean up scandir namelist
@@ -105,6 +110,27 @@ Result hashgen(char *hash_str, const char *filepath);
  */
 Result construct_path(char *result, int max_size, const char *base,
                       const char *sub);
+
+/**
+ * @brief Check if path should be excluded
+ * @param src Source path to check
+ * @param exclude Pattern to exclude
+ * @return 1 on success, 0 on failure
+ */
+int is_exclude_path(const char *src, const char *exclude);
+
+/**
+ * @brief Converts a pattern into a regular expression.
+ *
+ * Takes a pattern and converts it into a valid regular expression string.
+ * The resulting regex is anchored with '^' at the beginning and '$' at the end.
+ *
+ * @param pattern The input pattern string with wildcards.
+ * @return A newly allocated string containing the regular expression.
+ *         The caller is responsible for freeing the allocated memory.
+ *         Returns NULL on memory allocation failure.
+ */
+char *convert_pattern(const char *pattern);
 
 #endif    /* MANGEN_H */
 /** @} */ // End of MangenCore group

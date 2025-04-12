@@ -14,7 +14,6 @@
  * @return EXIT_FAILURE on error
  */
 int main(int argc, char *argv[]) {
-  // const char *dirpath = NULL;
   if (argc > MAX_ARGC) {
     display_error("Wrong number of arguments.\n");
     display_help();
@@ -22,7 +21,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (argc == 1) {
-    scan_dir(DEFAULT_PATH, NULL);
+    scan_dir(DEFAULT_PATH, NULL, NULL);
   }
 
   if (argc == 2) {
@@ -31,7 +30,29 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[1], "-v") == 0) {
       display_version();
     } else {
-      scan_dir(argv[1], NULL);
+      scan_dir(argv[1], NULL, NULL);
+    }
+  }
+
+  if (argc == 3) {
+    if (strcmp(argv[1], "-e") == 0) {
+      const char *exclude_path = argv[2];
+      scan_dir(DEFAULT_PATH, NULL, exclude_path);
+    } else {
+      display_error("Wrong argument sequence.\n");
+      display_help();
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (argc == 4) {
+    if (strcmp(argv[2], "-e") == 0) {
+      const char *exclude_path = argv[3];
+      scan_dir(argv[1], NULL, exclude_path);
+    } else {
+      display_error("Wrong argument sequence.\n");
+      display_help();
+      exit(EXIT_FAILURE);
     }
   }
 

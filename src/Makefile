@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic -I.
+CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic -I. -g
 LDFLAGS = -lcrypto -lssl
 
 # Source files

@@ -29,7 +29,8 @@ void display_version() {
 
 void display_error(const char *err) { printf("[ERROR]: %s", err); }
 
-void scan_dir(const char *rootpath, const char *subpath) {
+void scan_dir(const char *rootpath, const char *subpath,
+              const char *exclude_path) {
   struct dirent **namelist;
   char scanpath[PATH_MAX];
 
@@ -49,12 +50,13 @@ void scan_dir(const char *rootpath, const char *subpath) {
   }
 
   /* Process directory contents and clean up */
-  list_dir(rootpath, subpath, namelist, file_counter);
+  list_dir(rootpath, subpath, namelist, file_counter, exclude_path);
   clear_namelist(namelist, file_counter);
 }
 
 void list_dir(const char *rootpath, const char *subpath,
-              struct dirent **namelist, int file_counter) {
+              struct dirent **namelist, int file_counter,
+              const char *exclude_path) {
   /* Iterate through directory entries with path construction */
   for (int i = 0; i < file_counter; ++i) {
     char new_subpath[PATH_MAX];
@@ -74,9 +76,15 @@ void list_dir(const char *rootpath, const char *subpath,
       return;
     }
 
+    /* Filter current entry path */
+    if (is_exclude_path(new_subpath, exclude_path)) {
+      printf("[LOG]: exclude path : %s\n", new_subpath);
+      continue;
+    }
+
     /* Handle differet file types */
     if (namelist[i]->d_type == DT_DIR) {
-      scan_dir(rootpath, new_subpath); // Recursive descent
+      scan_dir(rootpath, new_subpath, exclude_path); // Recursive descent
     } else if (namelist[i]->d_type == DT_REG) {
       printf("%s : ", new_subpath);
       fflush(stdout);
@@ -181,4 +189,57 @@ Result construct_path(char *result, int max_size, const char *base,
 int filter(const struct dirent *file) {
   /* Directory entry filter */
   return (strcmp(file->d_name, ".") && strcmp(file->d_name, ".."));
+}
+
+int is_exclude_path(const char *src, const char *exclude) {
+  if (!src || !exclude) {
+    return 0;
+  }
+
+  /* Extract file name from full path */
+  const char *base = strrchr(src, '/');
+  base = (base) ? (base + 1) : src;
+
+  /* Convert wildcard pattern into a valid regular expression string */
+  char *regex_str = convert_pattern(exclude);
+  if (!regex_str) {
+    return 0;
+  }
+
+  regex_t regex;
+  int ret = regcomp(&regex, regex_str, REG_EXTENDED);
+  free(regex_str);
+  if (ret != 0) {
+    return 0; /* Compilation failure */
+  }
+
+  /* Execute the regular expression on the base name */
+  ret = regexec(&regex, base, 0, NULL, 0);
+  regfree(&regex);
+
+  return (ret == 0);
+}
+
+char *convert_pattern(const char *pattern) {
+  size_t len = strlen(pattern);
+  size_t buf_size = 2 * len + 10; // enough size for transformation
+  char *regex_pattern = malloc(buf_size);
+  if (!regex_pattern) {
+    return NULL;
+  }
+  char *ptr = regex_pattern;
+  *ptr++ = '^'; // Start of string anchor
+
+  for (size_t i = 0; i < len; ++i) {
+    if (pattern[i] == '*') {
+      *ptr++ = '.';
+      *ptr++ = '*';
+    } else {
+      *ptr++ = pattern[i];
+    }
+  }
+  *ptr++ = '$'; // End of string anchor
+  *ptr = '\0';
+
+  return regex_pattern;
 }
